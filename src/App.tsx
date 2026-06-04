@@ -1,7 +1,5 @@
 /* eslint-disable max-len */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import { CSSTransition, TransitionGroup } from 'react-transition-group';
-
 import React, { useEffect, useRef, useState } from 'react';
 import { UserWarning } from './UserWarning';
 import {
@@ -12,6 +10,10 @@ import {
   USER_ID,
 } from './api/todos';
 import { Todo } from './types/Todo';
+import { Header } from './components/Header/Header';
+import { TodoList } from './components/TodoList/TodoList';
+import { Footer } from './components/Footer/Footer';
+import { ErrorNotification } from './components/ErrorNotification/ErrorNotification';
 
 type FilterStatus = 'all' | 'active' | 'completed';
 
@@ -302,236 +304,48 @@ export const App: React.FC = () => {
         <h1 className="todoapp__title">todos</h1>
 
         <div className="todoapp__content">
-          <header className="todoapp__header">
-            {/* this button should have `active` class only if all todos are completed */}
-            {!isLoading && todos.length > 0 && (
-              <button
-                type="button"
-                className={`todoapp__toggle-all ${allCompleted ? 'active' : ''}`}
-                data-cy="ToggleAllButton"
-                onClick={handleToggleAll}
-                disabled={loadingIds.length > 0}
-              />
-            )}
-
-            {/* Add a todo on form submit */}
-            <form onSubmit={handleSubmit}>
-              <input
-                ref={inputRef}
-                data-cy="NewTodoField"
-                type="text"
-                className="todoapp__new-todo"
-                placeholder="What needs to be done?"
-                value={newTitle}
-                disabled={tempTodo !== null}
-                onChange={event => setNewTitle(event.target.value)}
-                autoFocus
-              />
-            </form>
-          </header>
-
-          {(todos.length > 0 || tempTodo) && (
-            <section className="todoapp__main" data-cy="TodoList">
-              <TransitionGroup>
-                <div>
-                  {visibleTodos.map(todo => (
-                    <CSSTransition
-                      key={todo.id}
-                      in={true}
-                      timeout={300}
-                      classNames="item"
-                      unmountOnExit
-                    >
-                      <div
-                        key={todo.id}
-                        data-cy="Todo"
-                        className={`todo ${todo.completed ? 'completed' : ''}`}
-                      >
-                        <label className="todo__status-label">
-                          <input
-                            aria-label="Todo status"
-                            data-cy="TodoStatus"
-                            type="checkbox"
-                            className="todo__status"
-                            checked={todo.completed}
-                            // readOnly
-                            onChange={() => handleToggle(todo)}
-                            disabled={loadingIds.includes(todo.id)}
-                          />
-                        </label>
-                        {editingId === todo.id ? (
-                          <form
-                            onSubmit={async event => {
-                              event.preventDefault();
-
-                              await handleRename(todo);
-                            }}
-                          >
-                            <input
-                              ref={editInputRef}
-                              data-cy="TodoTitleField"
-                              type="text"
-                              className="todo__title-field"
-                              placeholder="Empty todo will be deleted"
-                              value={editedTitle}
-                              // autoFocus
-                              onChange={e => setEditedTitle(e.target.value)}
-                              onBlur={() => {
-                                if (isCancelling) {
-                                  setIsCancelling(false);
-
-                                  return;
-                                }
-
-                                handleRename(todo);
-                              }}
-                              onKeyUp={event => {
-                                if (event.key === 'Escape') {
-                                  setIsCancelling(true);
-                                  setEditingId(null);
-                                }
-                              }}
-                            />
-                          </form>
-                        ) : (
-                          <>
-                            <span
-                              data-cy="TodoTitle"
-                              className="todo__title"
-                              onDoubleClick={() => {
-                                setEditingId(todo.id);
-                                setEditedTitle(todo.title);
-                              }}
-                            >
-                              {todo.title}
-                            </span>
-
-                            <button
-                              type="button"
-                              className="todo__remove"
-                              data-cy="TodoDelete"
-                              onClick={() => handleDelete(todo.id)}
-                            >
-                              ×
-                            </button>
-                          </>
-                        )}
-
-                        <div
-                          data-cy="TodoLoader"
-                          className={`modal overlay ${
-                            loadingIds.includes(todo.id) ? 'is-active' : ''
-                          }`}
-                        >
-                          <div className="modal-background has-background-white-ter" />
-                          <div className="loader" />
-                        </div>
-                      </div>
-                    </CSSTransition>
-                  ))}
-
-                  {tempTodo && (
-                    <div data-cy="Todo" className="todo">
-                      <label className="todo__status-label">
-                        <input
-                          aria-label="Todo status"
-                          type="checkbox"
-                          className="todo__status"
-                          disabled
-                        />
-                      </label>
-
-                      <span data-cy="TodoTitle" className="todo__title">
-                        {tempTodo.title}
-                      </span>
-
-                      <button type="button" className="todo__remove" disabled>
-                        ×
-                      </button>
-
-                      <div
-                        data-cy="TodoLoader"
-                        className="modal overlay is-active"
-                      >
-                        <div className="modal-background has-background-white-ter" />
-                        <div className="loader" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </TransitionGroup>
-            </section>
-          )}
-
-          {/* Hide the footer if there are no todos */}
-          {(todos.length > 0 || tempTodo) && (
-            <footer className="todoapp__footer" data-cy="Footer">
-              <span className="todo-count" data-cy="TodosCounter">
-                {activeTodos} items left
-              </span>
-
-              {/* Active link should have the 'selected' class */}
-              <nav className="filter" data-cy="Filter">
-                <a
-                  href="#/"
-                  className={`filter__link ${filter === 'all' ? 'selected' : ''}`}
-                  onClick={() => setFilter('all')}
-                  data-cy="FilterLinkAll"
-                >
-                  All
-                </a>
-
-                <a
-                  href="#/active"
-                  className={`filter__link ${filter === 'active' ? 'selected' : ''}`}
-                  onClick={() => setFilter('active')}
-                  data-cy="FilterLinkActive"
-                >
-                  Active
-                </a>
-
-                <a
-                  href="#/completed"
-                  className={`filter__link ${filter === 'completed' ? 'selected' : ''}`}
-                  onClick={() => setFilter('completed')}
-                  data-cy="FilterLinkCompleted"
-                >
-                  Completed
-                </a>
-              </nav>
-
-              {/* this button should be disabled if there are no completed todos */}
-              <button
-                type="button"
-                className="todoapp__clear-completed"
-                data-cy="ClearCompletedButton"
-                disabled={completedTodos.length === 0}
-                onClick={handleClearCompleted}
-              >
-                Clear completed
-              </button>
-            </footer>
-          )}
-        </div>
-
-        {/* DON'T use conditional rendering to hide the notification */}
-        {/* Add the 'hidden' class to hide the message smoothly */}
-        <div
-          data-cy="ErrorNotification"
-          className={`
-              notification is-danger is-light has-text-weight-normal
-              ${!error ? 'hidden' : ''}
-            `}
-        >
-          <button
-            data-cy="HideErrorButton"
-            type="button"
-            className="delete"
-            onClick={() => setError('')}
+          <Header
+            isLoading={isLoading}
+            todosLength={todos.length}
+            allCompleted={allCompleted}
+            loading={loadingIds.length > 0}
+            newTitle={newTitle}
+            tempTodoExists={tempTodo !== null}
+            onToggleAll={handleToggleAll}
+            onSubmit={handleSubmit}
+            onChangeTitle={setNewTitle}
+            inputRef={inputRef}
           />
-          {/* show only one message at a time */}
-          {error}
+
+          <TodoList
+            todosLength={todos.length}
+            visibleTodos={visibleTodos}
+            tempTodo={tempTodo}
+            loadingIds={loadingIds}
+            editingId={editingId}
+            editedTitle={editedTitle}
+            isCancelling={isCancelling}
+            editInputRef={editInputRef}
+            setEditedTitle={setEditedTitle}
+            setEditingId={setEditingId}
+            setIsCancelling={setIsCancelling}
+            onToggle={handleToggle}
+            onDelete={handleDelete}
+            onRename={handleRename}
+          />
+
+          <Footer
+            todosLength={todos.length}
+            tempTodo={tempTodo}
+            activeTodos={activeTodos}
+            completedTodosCount={completedTodos.length}
+            filter={filter}
+            onFilterChange={setFilter}
+            onClearCompleted={handleClearCompleted}
+          />
         </div>
+
+        <ErrorNotification error={error} onClose={() => setError('')} />
       </div>
     </section>
   );
